@@ -1,5 +1,6 @@
 package com.example.ggupt.intervaltimer;
 
+import android.media.MediaPlayer;
 import android.os.CountDownTimer;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -20,6 +21,7 @@ public class MainActivity extends AppCompatActivity {
     int durationInt, repetitionInt;
     long intervalInt;
     boolean isTimerRunning = false;
+    int timesPlayed = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +34,8 @@ public class MainActivity extends AppCompatActivity {
         repetition = (EditText) findViewById(R.id.editText5);
         setTimer = (Button) findViewById(R.id.button);
 
+        final MediaPlayer mediaPlayer = MediaPlayer.create(this, R.raw.beep_01a);
+
         setTimer.setOnClickListener(new View.OnClickListener(){
 
             @Override
@@ -42,35 +46,9 @@ public class MainActivity extends AppCompatActivity {
                     intervalInt = Integer.parseInt(interval.getText().toString());
                     repetitionInt = Integer.parseInt(repetition.getText().toString());
 
-                    timer = new CountDownTimer(intervalInt * 1000, 1000) {
+                    makeTimer(intervalInt, repetitionInt, durationInt, mediaPlayer);
 
-                        public void onTick(long millisUntilFinished) {
-                            statusTimer.setText("seconds remaining: " + millisUntilFinished / 1000);
-                        }
-
-                        public void onFinish() {
-                            statusTimer.setText("done!");
-                            repetitionInt--;
-                            if(repetitionInt > 0){
-                                timer = new CountDownTimer(intervalInt * 1000, 1000) {
-
-                                    public void onTick(long millisUntilFinished) {
-                                        statusTimer.setText("seconds remaining: " + millisUntilFinished / 1000);
-                                    }
-
-                                    public void onFinish() {
-                                        statusTimer.setText("done!");
-                                        repetitionInt--;
-                                        if(repetitionInt > 0){
-
-                                        }
-                                    }
-                                }.start();
-                            }
-                        }
-                    }.start();
-
-                    isTimerRunning = true;
+                    isTimerRunning = false;
                 }
                 else if(isTimerRunning){
                     setTimer.setText("Set Alarm");
@@ -81,4 +59,38 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+    public void makeTimer(final long interval, final int r, final int d, final MediaPlayer m){
+        timesPlayed = 1;
+        isTimerRunning = true;
+
+        final int rNew = r -1;
+        timer = new CountDownTimer(interval * 1000, 1000) {
+
+            public void onTick(long millisUntilFinished) {
+                statusTimer.setText("seconds remaining: " + millisUntilFinished / 1000);
+            }
+
+            public void onFinish() {
+                int timesPlayed = 1;
+                statusTimer.setText("done!");
+                m.start();
+                if (rNew != 0) {
+                    makeTimer(interval, rNew, d, m);
+                }
+            };
+        }.start();
+
+        m.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mediaPlayer) {
+                if (timesPlayed < d) {
+                    timesPlayed++;
+                    m.start();
+                }
+            }
+        });
+
+    }
+
 }
